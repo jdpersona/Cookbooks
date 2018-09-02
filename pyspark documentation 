@@ -1,0 +1,1019 @@
+import pandas as pd
+import numpy as np
+import seaborn as sns
+df2 = sns.load_dataset('titanic')
+
+from pyspark.sql import SparkSession
+
+spark = SparkSession.builder.getOrCreate()
+
+df = spark.read.csv("/Users/john.ekedum@ibm.com/Downloads/marriage.csv", header=True, inferSchema=True)
+
+df2 = spark.read.csv("/Users/john.ekedum@ibm.com/.Trash/TechnicalProperties.csv", header=True, inferSchema=True)
+  
+  
+  
+  
+###########################################   class pyspark.sql.DataFrame ################################################# 
+  
+  
+#Aggregate on the entire DataFrame  
+  
+from pyspark.sql import  functions as F 
+from pyspark.sql.functions import col
+ 
+df.select(col('State'), col('2007'), col('2008')).show()
+df.agg({"2007":"sum", "2008":"sum"}).show()
+
+#alternatively
+df.agg(F.sum('2007')).show() 
+
+
+#ALIAS to temporality rename a column
+df.select(col('State'), col('2007').alias('year_2007'), col('2008').alias('year_2008')).show()
+
+  df2 = df2.select('Session_id','Timestamp', 'Browser_Type', 'Operating_System', 'Mobile_Device', 'Flash_support')
+# cache() persist to memoryview
+df.cache()
+  
+  
+#Find correllation
+from pyspark.sql.functions import col
+df.corr('2011', '2016')
+
+
+
+#count dataset
+df.count() #spark
+
+#peek at the dataset
+
+df.show(3)
+df.limit(34).show()
+
+# summary statistics
+df.describe('2011').show()
+
+
+# view row
+df.limit(1).collect()
+df.head(1)
+
+
+#Create SQL table
+df.createOrReplaceTempView('datable')
+spark.sql("select * from datable where state in('Texas','Colorado') ").show()
+
+
+#Returns the cartesian product with another DataFrame.
+
+df2.crossJoin(df)
+
+
+#crosstab(col1, col2)
+df_ = df.limit(8).select('State', '2007')
+
+df.crosstab('2007','State', ).show(3)
+
+
+test1.crosstab( 'State', '2007').show()
+
+#distinct
+df2.select('Operating_System').distinct().show()
+
+#Drop duplicate
+check_dups=df2.dropDuplicates(['Operating_System'])
+
+check_dups.selectExpr('Operating_System').show()
+
+#Drop all Na values
+check_dups = df2.dropna(how='all', subset=['Flash_support'])
+check_dups.show()
+
+
+#Dtypes ( check data type)
+df2.dtypes
+
+
+# fill na's
+df2 = df2.fillna({'Mobile_Device':'no_device', 'Operating_System':'none given'})
+
+
+#Group by
+df2.groupBy('Operating_System', 'Browser_Type').count().show()
+
+df2.groupBy('Operating_System').agg({'Browser_Type':'count'})
+
+
+#filter/ where
+from pyspark.sql.functions import expr
+df2.filter(expr("Operating_System == 'MICROSOFT_WINDOWS7'")).show(3)
+
+df2.filter(df2.Operating_System =='MICROSOFT_WINDOWS7').show(3)
+
+
+#return the first row
+df2.first()
+
+
+# for each
+
+def f(person):
+     print(person * 10
+
+dd.foreach(f).show()
+
+#hint
+df2.hint('Operating').show()
+
+
+#order by
+df3.select('Timestamp', 'Browser_Type','Operating_System').orderBy('Timestamp',ascending=False).show()
+
+
+#replace
+
+df2.select('Operating_System').show()
+df2.replace('LINUX', 'LINUX_OS', subset= 'Operating_System').show()
+
+df2.na.replace('linuxoo','LINUX', 'Operating_System').show
+
+
+#groupby
+df2.groupBy('Operating_System').agg({'Mobile_Device':'count'}).show()
+
+
+#Join
+df3.join(df2,  df3.Session_id == df2.Session_id,  'outer').count()
+
+
+#Intersect
+df3.intersect(df2).count()
+
+df2.select('Session_id').intersect(df3.select('Session_id')).show()
+
+
+
+# like head, show
+df3.limit(12).show()
+
+
+#print out columns
+df3.printSchema()
+
+
+#random split
+
+splits = df2.randomSplit([1.0, 3.0, 2.0], 2)
+
+
+
+#Roll up
+df2.rollup("Browser_Type", "Operating_System").count().orderBy("Browser_Type", "Operating_System").show()
+
+
+#sample
+#sample(withReplacement, fraction, seed=None)
+df2.sample(False, 0.5, 10).count()
+
+
+
+#sampleBy(col, fractions, seed=None)
+#Returns a stratified sample without replacement based on the fraction given on each stratum
+#select, selectExpr
+df2.selectExpr("Operating_System","Flash_support").show(3)
+
+
+
+
+#Sort  sort(*cols, **kwargs)
+df2.sort('Timestamp', ascending=True).show()
+
+
+#Returns a new DataFrame with each partition sorted by the specified column(s
+df2.sortWithinPartitions('Timestamp',ascending=True).show()
+
+
+#subtract(other) Return a new DataFrame containing rows in this frame but not in another frame.
+data = df2.randomSplit([6.0, 4.0,], 2)
+data[1].count()
+data[0].count()
+
+data[0].select('Browser_Type').subtract(data[1].select('Browser_Type')).show()
+
+
+# take(num) Returns the first num rows as a list of Row.
+df2.take(1)
+   
+
+#toDf
+
+.toDF('f1', 'f2').collect()
+data_one = data_two.select('Session_id','Timestamp')
+new_data = data_one.toDF('Session','Time')      
+new_data.createOrReplaceTempView('df_newTable')
+
+spark.sql("select date_sub(Time,10) as date  from  df_newTable where date_sub(Time,10) > '2018-07-26' ").show()
+
+# toJSON(use_unicode=True) Converts a DataFrame into a RDD of string.
+
+
+
+#toPandas() Returns the contents of this DataFrame as Pandas pandas.DataFrame.
+new_data_pd = new_data.toPandas()
+# do your pandas stuff
+new_data_pd.head()
+for i in new_data_pd.Session:
+    print(i)
+    break
+
+
+
+
+
+# union(other)¶
+
+#Return a new DataFrame containing union of rows in this and another frame.
+
+#This is equivalent to UNION ALL in SQL. To do a SQL-style set union (that does deduplication of elements), use this function followed by a distinct.
+#Also as standard in SQL, this function resolves columns by position (not by name).
+
+data[1].count() + data[0].count()
+
+# like rbind in r 
+data[1].union(data[0]).distinct().count()
+
+
+#unionAll(other)
+
+
+#withColumn(colName, col) #Returns a new DataFrame by adding a column or replacing the existing column that has the same name.
+dd = df.select('2009','2007','2006','2005')
+dd.withColumn('New', df['2007'] * 1000).show()
+dd.withColumn('New', df['2007'] * 1000).show()
+
+
+#df.withColumnRenamed(existing, new)
+dd.withColumnRenamed('2007', 'Year_2007').show(4)
+df_table
++--------')
+
+
+#write
+   
+##################################class pyspark.sql.GroupedData(jgd, sql_ctx)######################################
+#A set of methods for aggregations on a DataFrame, created by DataFrame.groupBy(). 
+
+agg(*exprs)
+
+Compute aggregates and returns the result as a DataFrame.
+The available aggregate functions are avg, max, min, sum, count.
+
+#agg everything
+df2.agg( {'*':'count'}).show()
+
+df2.agg({'Flash_support':'count'}).show()
+
+df.select(  avg(col('2007')) ).show()    
+
+df.select(expr("mean('2006')")).show()   
+
+df.select(max(df['2008'])).show()  
+   
+#pivot(pivot_col, values=None)
+
+#Pivots a column of the current [[DataFrame]] and perform the specified aggregation.
+#works onnly with groupby object
+df_pivot = df2.dropDuplicates(['Operating_System'])
+
+
+df.groupBy('State').pivot('State', ['2007', '2006']).count().show()
+
+
+#asc()
+
+#Returns a sort expression based on the ascending order of the given column name.
+
+ 
+# between(lowerBound, upperBound)
+
+#A boolean expression that is evaluated to true if the value of this expression is between the given columns.  
+   
+   
+   
+df.select(df['2009'],df['2006'].between(3, 30)).show()   
+   
+df.select(df['2009'], df['2006']).withColumn('Expensive',df['2006'].between(20, 50)).show()   
+   
+#cast(dataType)   conversion
+
+df.select(df['2009'].cast("string")).show(1)
+   
+df.select(df['2009'].cast("int")).show(1)   
+   
+
+
+#contains(other)
+#booleAN
+df2.select(df2.Operating_System.contains('LINUX')).show()   
+   
+   
+#SHOW values
+df2[df2.Operating_System.contains('LINUX')].show()    
+   
+#Endswith
+df2.filter(df2.Operating_System.endswith('NUX')).show()
+ 
+#Get item  
+df2.select(df2.Browser_Type.getItem("")).show()
+  
+  
+  
+#isNotNull()
+
+df2.filter( df2.Flash_support.isNotNull() ).show()
+
+#is Null
+df2.filter( df2.Flash_support.isNull() ).show()
+
+#isin
+df2.filter( df2.Operating_System.isin('LINUX','MICROSOFT_WINDOWS7') ).show()
+
+#like
+df2.filter(df2.Browser_Type.like('IE%')).show()
+
+
+
+#WHEN/otherwise
+#otherwise(value)
+
+#Evaluates a list of conditions and returns one of multiple possible result expressions.
+#If Column.otherwise() is not invoked, None is returned for unmatched conditions.
+
+df.select(when(df['age'] == 2, 3).otherwise(4).alias("age")).collect()
+
+df2.select( when(df.Operating_System=='LINUX', 'Its Linux').otherwise("Not LINUX").alias('Is iT LINUX') )
+
+
+
+splits[2].count()
+
+splits[0].count()
+
+splits[1].count()
+
+
+
+#stats
+from pyspark.sql.functions import ceil, pow,avg, collect_list, collect_set
+
+df.select(      avg('2014')   ).limit(10).show()
+
+df.select(ceil(avg('2014'))   ).limit(10).show()
+
+
+#collect to list
+df.select(collect_list('2014'),collect_list('2016') ).show()
+
+
+#remove duplicates thu sets
+df.select(collect_set('2014'),collect_set('2016') ).show()
+
+df2.show()
+
+#concat string columns
+from pyspark.sql.functions import concat_ws, countDistinct, create_map
+df2.select(concat_ws('-',  df2.Operating_System, df2.Mobile_Device)).show(2)
+
+
+# distinct
+df2.select(countDistinct('Operating_System')).show() # returns a dataframe
+
+
+df2.select('Operating_System').distinct().count() # returns a number
+
+#map
+df2.select(create_map('Operating_System','Mobile_Device')).show()
+
+
+#Date
+from pyspark.sql.functions import current_date, dayofmonth, datediff, current_timestamp, date_add, date_format,date_sub
+
+
+df2.select( 'Timestamp' ).show(2)
+
+#date_add
+df2.select(date_add('Timestamp',10)).show(3)
+
+#current_timestamp
+df2.select( current_timestamp(),  'Timestamp' ).show(3)
+
+#date format
+df2.select(date_format('Timestamp', 'MM/dd/yyy')).show(3)
+
+
+# date sub
+df2.select(date_sub('Timestamp', 10)).limit(1).show()
+
+
+
+#datediff
+date1= df2.select('Timestamp').limit(1)
+
+date2 = df2.select('Timestamp').orderBy('Timestamp', ascending=False).limit(1)
+
+df2.select(datediff(date1, date2)).show()
+
+
+
+#alternatively
+df2.createOrReplaceTempView('data_table')
+
+spark.sql("select * from datable where state in('Texas','Colorado') ").show()
+
+spark.sql("select current_date(), current_timestamp(), Timestamp from data_table limit 5").show()
+
+#pyspark.sql.functions.dayofmonth(col)
+pyspark.sql.functions.dayofmonth(col)
+
+
+from pyspark.sql.functions import decode
+
+df.limit(2).select(decode('Operating_System','charset'))
+
+#pyspark.sql.functions.dense_rank()¶
+
+
+
+from pyspark.sql.functions import desc
+#pyspark.sql.functions.desc(col)
+df2.select(desc('Operating_System'), 'Browser_Type')
+
+
+# pyspark.sql.functions.explode(col)[source]¶
+#Returns a new row for each element in the given array or map.
+from pyspark.sql import Row
+from pyspark.sql.functions import explode
+eDF = spark.createDataFrame([Row(a=1, intlist=[1,2,3], mapfield={"a": "b"})])
+eDF.show()
+eDF.select('a', 'intlist', explode(eDF.intlist).alias("anInt")).show()
+
+
+
+
+
+from pyspark.sql.functions import expr, format_number, format_string
+#pyspark.sql.functions.expr(str)[source]
+
+#Parses the expression string into the column that it represents
+df2.select(expr("length(Browser_Type)")).collect()
+df2.select(expr("length(Browser_Type)")).show()
+
+#pyspark.sql.functions.format_number(col, d)[source]¶
+#Formats the number X to a format like ‘#,–#,–#.–’, rounded to d decimal places with HALF_EVEN round mode, and returns the result as a string.
+# Parameters:	
+#     col – the column name of the numeric value to be formatted
+#     d – the N decimal places
+
+trial = spark.createDataFrame([(5,)], ['a']).show()
+trial.select(format_number('a', 7).alias('v')).show()
+
+#pyspark.sql.functions.format_string(format, *cols)[source]
+
+#Formats the arguments in printf-style and returns the result as a string column. Parameters:	
+#  col – the column name of the numeric value to be formatted
+#  d – the N decimal places  
+f = spark.createDataFrame([(5, "hello","who", 23)], ['a', 'b','c','d'])
+f.show()
+f.select(format_string('%d - %s - %s - %d', f.a, f.b, f.c, f.d).alias('v'), 'a','b').show()
+        
+
+
+
+#pyspark.sql.functions.from_json(col, schema, options={})[source]
+
+
+from pyspark.sql.types import *
+from pyspark.sql.functions import from_json, get_json_object, lag
+
+data = [(1, '''{"a": 1}''')]
+schema = StructType([StructField("a", IntegerType())])
+df = spark.createDataFrame(data, ("key", "value"))
+df.show()
+df.select(from_json(df.value, schema).alias("json")).show()
+
+
+# pyspark.sql.functions.get_json_object(col, path)[source]
+data = [("1", '''{"f1": "value1", "f2": "value2"}'''), ("2", '''{"f1": "value12"}''')]
+
+df = spark.createDataFrame(data, ("key", "jstring"))
+df.show()
+df.select(df.key, get_json_object(df.jstring, '$.f1').alias("c0"), get_json_object(df.jstring, '$.f2').alias("c1") ).show()
+
+
+# pyspark.sql.functions.greatest(*cols)[source]¶
+from pyspark.sql.functions import greatest, hour, second, initcap, input_file_name, instr, isnan, isnull
+df = spark.createDataFrame([(1, 4, 3),(5,30,45)], ['a', 'b', 'c'])
+df.show()
+df.select(greatest(df.a, df.b, df.c).alias("greatest")).show() # find greatest across columns skippig null
+
+
+
+
+# pyspark.sql.functions.least(*cols)[source]
+
+# Returns the least value of the list of column names, skipping null values. This function takes at least 2 parameters. It will return null iff all parameters are null.
+
+
+df_test = spark.createDataFrame([(1, 4, 3)], ['a', 'b', 'c'])
+df_test.select(least(df_test.a, df_test.b, df_test.c).alias("least")).show()
+
+
+
+#pyspark.sql.functions.hour(col)[source]
+
+#Extract the hours of a given date as integer.
+
+df2.select('Timestamp', hour('Timestamp').alias('Hours_spent')).show()
+
+
+
+#pyspark.sql.functions.second(col)[source]¶
+    #Extract the seconds of a given date as integer.
+    
+df2.select('Timestamp', second('Timestamp').alias('seconds_spent')).show()
+
+
+#pyspark.sql.functions.initcap(col)[source]
+
+#Translate the first letter of each word to upper case in the sentence.
+
+df2.select('Operating_System', initcap('Operating_System').alias('OS_cap')).show()
+
+
+#pyspark.sql.functions.input_file_name()[source]| Creates a string column for the file name of the current Spark task.
+
+df2.select('Operating_System', 'Browser_Type', input_file_name() ).show() 
+
+
+#pyspark.sql.functions.instr(str, substr)[source]
+
+#Locate the position of the first occurrence of substr column in the given string. Returns null if either of the arguments are null.
+#The position is not zero based, but 1 based index. Returns 0 if substr could not be found in str.
+df2.select('Browser_Type', instr('Browser_Type', 'CHROME').alias('Chrome_pos')).show()
+
+
+
+# pyspark.sql.functions.isnan(col)[source]  An expression that returns true iff the column is NaN.
+
+df2.select(isnan('Operating_System'), 'Operating_System').show()
+
+#pyspark.sql.functions.isnull(col)[source]
+
+#An expression that returns true iff the column is null
+df2.select(isnull('Mobile_Device'), 'Mobile_Device'). show()
+
+
+#Inverse
+test = spark.createDataFrame([(1.0, float('nan')), (float('nan'), 2.0)], ("a", "b"))
+test.select('b', ~isnan('b').alias('null_b')).show()
+
+
+
+
+
+
+#pyspark.sql.functions.lag(col, count=1, default=None)[source]¶
+
+#Window function: returns the value that is offset rows before the current row, and defaultValue if there is less than offset rows before the current row. For example, an offset of one will return the previous row at any given point in the window partition.
+
+#This is equivalent to the LAG function in SQL.
+#Parameters:	
+        # col – name of column or expression
+        # count – number of row to extend
+        # default – default value
+
+
+
+#  pyspark.sql.functions.lead(col, count=1, default=None)[source]
+
+#     Window function: returns the value that is offset rows after the current row, and defaultValue if there is less than offset rows after the current row. For example, an offset of one will return the next row at any given point in the window partition.
+
+#     This is equivalent to the LEAD function in SQL.
+#     Parameters:	
+
+#         col – name of column or expression
+#         count – number of row to extend
+#         default – default value
+
+
+
+#pyspark.sql.functions.last(col, ignorenulls=False)[source]
+#Aggregate function: returns the last value in a group.
+from pyspark.sql.functions import last, first, last_day,least
+
+
+df2.select(first('Timestamp'), last('Timestamp')).show()
+
+
+#pyspark.sql.functions.last_day(date)[source]¶
+
+#Returns the last day of the month which the given date belongs to. 
+df2.select(last_day('Timestamp').alias('Last_Day')).show()
+
+
+
+#pyspark.sql.functions.length(col)[source]
+
+from pyspark.sql.functions import length, lit
+#Calculates the length of a string or binary expression.
+df2.select(length('Browser_type')).show()
+
+
+#pspark.sql.functions.levenshtein(left, right)[source]
+
+#Computes the Levenshtein distance of the two given strings.
+
+
+#pyspark.sql.functions.lit(col)
+
+#Creates a Column of literal value.
+
+df2.select(lit("DDF_data"),'Browser_Type').withColumnRenamed('first_column', 'JARGON').show()
+
+
+
+#pyspark.sql.functions.locate(substr, str, pos=1)[source]
+
+#Locate the position of the first occurrence of substr in a string column, after position pos.
+
+        # substr – a string
+        # str – a Column of pyspark.sql.types.StringType
+        # pos – start position (zero based)
+
+from pyspark.sql.functions import locate, log, lower, lpad, rpad, ltrim,monotonically_increasing_id, posexplode
+
+df2.select(locate('CHROME', df2.Browser_Type, 1)).show()
+
+
+df_test = spark.createDataFrame([('abcd',)], ['s',])
+
+df_test.select(locate('b', df_test.s, 1).alias('s')).show()
+
+# pyspark.sql.functions.lower(col)
+
+#     Converts a string column to lower case.
+
+df2.select(lower(df2.Browser_Type),expr('Browser_Type')).show()
+
+
+
+# pyspark.sql.functions.lpad(col, len, pad)[source]
+
+#     Left-pad the string column to width len with pad.
+
+df2.select(lpad( df2.Browser_Type, 24, '*')).show()
+df2.select(rpad( df2.Browser_Type,  24, '*')).show()
+
+
+\
+# pyspark.sql.functions.ltrim(col)
+df2.select(ltrim(df2.Browser_Type)).show()
+
+
+#pyspark.sql.functions.max(col)
+
+#Aggregate function: returns the maximum value of the expression in a group.
+
+
+#  pyspark.sql.functions.monotonically_increasing_id()[source]
+#     A column that generates monotonically increasing 64-bit integers.
+    
+df2.select(monotonically_increasing_id().alias('id')).show()
+
+ 
+
+#pyspark.sql.functions.month(col)[source]
+
+#Extract the month of a given date as integer.
+from pyspark.sql.functions import month, months_between,nanvl, next_day , ntile
+df2.select(month('Timestamp')).show()
+df2.select(month('Timestamp')).show()
+
+
+
+#pyspark.sql.functions.months_between(date1, date2)[source]
+
+#Returns the number of months between date1 and date2.
+
+df_test = spark.createDataFrame([('1997-02-28 10:30:00', '1996-10-30')], ['t', 'd'])
+
+df_test.show()
+
+df_test.select('t',   'd', months_between(df_test.t, df_test.d).alias('months')).show()
+
+
+
+# pyspark.sql.functions.nanvl(col1, col2)[source]
+
+# Returns col1 if it is not NaN, or col2 if col1 is NaN.
+
+# Both inputs should be floating point columns (DoubleType or FloatType).
+df_test = spark.createDataFrame([(20.5, float('nan')), (float('nan'), 24.0)], ("a", "b"))
+df_test.show()
+df_test.select(nanvl("a", "b").alias("r1"), nanvl(df_test.a, df_test.b).alias("r2")).show()
+
+
+#pyspark.sql.functions.next_day(date, dayOfWeek)[source]
+#Returns the first date which is later than the value of the date column.
+
+#Day of the week parameter is case insensitive, and accepts:
+        #“Mon”, “Tue”, “Wed”, “Thu”, “Fri”, “Sat”, “Su
+        
+df_test = spark.createDataFrame([('2018-08-02',)], ['d'])
+df_test.show()
+
+df_test.select(next_day(df_test.d, 'Mon').alias('date')).show()     
+
+
+
+#  pyspark.sql.functions.ntile(n)[source]
+
+#     Window function: returns the ntile group id (from 1 to n inclusive) in an ordered window partition. For example, if n is 4, the first quarter of the rows will get value 1, the second quarter will get 2, the third quarter will get 3, and the last quarter will get 4.
+
+#     This is equivalent to the NTILE function in SQL.
+#     Parameters:	n – an integer
+df2.select(ntile(2),expr('Browser_Type'))
+
+
+
+#  pyspark.sql.functions.percent_rank()
+
+#     Window function: returns the relative rank (i.e. percentile) of rows within a window partition.
+
+
+
+df_test = spark.createDataFrame([Row(a=1, intlist=['welcom','joh', 35, 8], mapfield={"a": "b"})])
+df_test.show()
+
+ df_test.select(posexplode(df_test.intlist)).show() # this gives index position
+ 
+ df_test.select(explode(df_test.intlist)).show() # this does not give index position
+
+
+#pyspark.sql.functions.quarter(col) extract quater
+from pyspark.sql.functions import quarter, rand, randn
+
+df2.select(quarter('Timestamp')).show()
+
+
+
+# pyspark.sql.functions.rand(seed=None)[source]
+
+#     Generates a random column with independent and identically distributed (i.i.d.) samples from U[0.0, 1.0].
+df2.select(rand(seed=43)).show()
+
+
+
+
+
+#pyspark.sql.functions.randn(seed=None)[source]
+
+#Generates a column with independent and identically distributed (i.i.d.) samples from the standard normal distribution.
+test = df2.select(randn(seed=43)).toPandas()
+
+import matplotlib.pyplot as plt
+test.plot()
+
+
+#  pyspark.sql.functions.rank()
+
+#Window function: returns the rank of rows within a window partition.
+
+#The difference between rank and dense_rank is that dense_rank leaves no gaps in ranking sequence when there are ties. That is, if you were ranking a competition using dense_rank and had three people tie for second place, you would say that all three were in second place and that the next person came in third. Rank would give me sequential numbers, making the person that came in third place (after the ties) would register as coming in fifth.
+
+#This is equivalent to the RANK function in SQL.
+
+
+
+
+
+from pyspark.sql.functions import regexp_extract,regexp_replace, reverse, repeat, round, substring, sumDistinct
+#pyspark.sql.functions.regexp_extract(str, pattern, idx)[source]
+
+#Extract a specific group matched by a Java regex, from the specified string column. If the regex did not match, or the specified group did not match, an empty string is returned.
+
+df = spark.createDataFrame([('Welcome',)], ['str'])
+
+df.select(regexp_extract('str', '(\d+)-(\d+)', 1).alias('d')).show()
+
+
+#pyspark.sql.functions.regexp_replace(str, pattern, replacement)[source]¶
+    #Replace all substrings of the specified string value that match regexp with rep.
+
+df.select('state').show()
+df.select(regexp_replace('state', 'Louisiana', 'Nola')).show()
+
+#pyspark.sql.functions.repeat(col, n)[source]
+#Repeats a string column n times, and returns it as a new string column.
+
+
+#pyspark.sql.functions.reverse(col)
+#Reverses the string column and returns it as a new string column.
+df2.select(reverse(df2.Browser_Type)).show()
+
+
+
+
+#pyspark.sql.functions.round(col, scale=0)[source]
+#Round the given value to scale decimal places using HALF_UP rounding mode if scale >= 0 or at integral part when scale < 0.
+
+spark.createDataFrame( [(2.57889,)], ['number']).select(round('number', 1).alias('r')).show()
+
+
+from pyspark.sql.functions import rtrim, rpad, shiftRight, size, sort_array, split, substring_index, to_utc_timestamp
+#pyspark.sql.functions.row_number()¶
+#Window function: returns a sequential number starting at 1 within a window partition.
+
+
+test = spark.createDataFrame([(42,)], ['a'])
+test.select(shiftRight('a', 2).alias('r')).show()
+
+
+
+# pyspark.sql.functions.size(col)[source]
+
+    # Collection function: returns the length of the array or map stored in the column.
+    # Parameters:	col – name of column or expression
+
+
+df = spark.createDataFrame([([5],),([3],),([],)], ['data'])
+df.show()
+df.select(sort_array(df.data).alias('r')).show()
+
+
+#pyspark.sql.functions.split(str, pattern)[source]
+
+#Splits str around pattern (pattern is a regular expression).
+
+df = spark.createDataFrame([('ab12cd',)], ['s',])
+df.show(3)
+
+df.select(explode(split(df.s, '[0-9]+').alias('s'))).show()
+
+
+#pyspark.sql.functions.substring(str, pos, len)[source]
+
+#Substring starts at pos and is of length len when str is String type or returns the slice of byte array that starts at pos in byte and is of length len when str is Binary type
+
+
+df2.select(substring('Browser_Type', 5, 10)).show()
+
+
+#  pyspark.sql.functions.substring_index(str, delim, count)[source]
+
+# Returns the substring from string str before count occurrences of the delimiter delim. If count is positive, everything the left of the final delimiter (counting from left) is returned. If count is negative, every to the right of the final delimiter (counting from the right) is returned. substring_index performs a case-sensitive match when searching for delim.
+
+
+df = spark.createDataFrame([('john/ugoc/eke/bel',)], ['s'])
+df.show()
+
+df.select(substring_index(df.s, '/',  -2).alias('s')).show()
+
+
+
+
+# pyspark.sql.functions.sum(col)
+
+#     Aggregate function: returns the sum of all values in the expression.
+
+df = spark.createDataFrame([   (54,),    (54,),   (100,)    ], ['data'])
+df.show()
+# pyspark.sql.functions.sumDistinct(col)
+
+df.select(sumDistinct( expr('data')) ).show()
+#     Aggregate function: returns the sum of distinct values in the expression.
+
+
+
+
+#  pyspark.sql.functions.to_date(col, format=None)[source]
+
+from pyspark.sql.functions import to_date, to_timestamp, translate, trunc, trim
+#     Converts a Column of pyspark.sql.types.StringType or pyspark.sql.types.TimestampType into pyspark.sql.types.DateType using the optionally specified format. Default format is ‘yyyy-MM-dd’. Specify formats according to SimpleDateFormats.
+df = spark.createDataFrame([('1997-02-28 10:30:00',)], ['datetime'])
+
+df.select(to_date(df.datetime).alias('date')).collect()
+df.printSchema()
+
+#  pyspark.sql.functions.to_json(col, options={})[source]
+#     Converts a column containing a [[StructType]] or [[ArrayType]] of [[StructType]]s into a JSON string. Throws an exception, in the case of an unsupported type.
+
+
+#pyspark.sql.functions.to_timestamp(col, format=None)[source]
+
+#Converts a Column of pyspark.sql.types.StringType or pyspark.sql.types.TimestampType into pyspark.sql.types.DateType using the optionally specified format. Default format is ‘yyyy-MM-dd HH:mm:ss’. Specify formats according to SimpleDateFormats.
+
+df = spark.createDataFrame([('1997-02-28 10:30:00',)], ['t'])
+df.select(to_timestamp(df.t).alias('dt')).show()
+
+
+df = spark.createDataFrame([('1997-02-28 10:30:00',)], ['t'])
+df.select(to_timestamp(df.t, 'yyyy-MM-dd HH:mm:ss').alias('dt')).show()
+
+
+
+
+
+# pyspark.sql.functions.to_utc_timestamp(timestamp, tz)[source]
+
+#     Given a timestamp, which corresponds to a certain time of day in the given timezone, returns another timestamp that corresponds to the same time of day in UTC.
+
+df = spark.createDataFrame([('1997-02-28 10:30:00',)], ['t'])
+df.select(to_utc_timestamp(df.t, "PST").alias('t')).show()
+
+
+# pyspark.sql.functions.translate(srcCol, matching, replace)[source]
+# A function translate any character in the srcCol by a character in matching. The characters in replace is corresponding to the characters in matching. The translate will happen when any character in the string matching with the character in the matching.
+
+df= spark.createDataFrame([('translate',)], ['a'])
+df.show()
+
+df.select(translate('a', "t", "1").alias('r')).show()
+
+
+
+
+# pyspark.sql.functions.trim(col)
+
+#     Trim the spaces from both ends for the specified string column.
+
+
+
+
+
+
+# # pyspark.sql.functions.trunc(date, format)[source]
+
+#     Returns date truncated to the unit specified by the format.
+#     Parameters:	format – ‘year’, ‘YYYY’, ‘yy’ or ‘month’, ‘mon’, ‘mm’
+
+df = spark.createDataFrame([('1997-02-28',)], ['d'])
+df.select(trunc(df.d, 'year').alias('year')).show()
+    
+    
+
+
+
+
+
+#  pyspark.sql.functions.udf(f=None, returnType=StringType)[source]
+
+#     Creates a Column expression representing a user defined function (UDF).
+
+#     Note
+
+#     The user-defined functions must be deterministic. Due to optimization, duplicate invocations may be eliminated or the function may even be invoked more times than it is present in the query.
+#     Parameters:	
+
+        f – python function if used as a standalone function
+        returnType – a pyspark.sql.types.DataType object
+
+from pyspark.sql.types import IntegerType
+from pyspark.sql.functions import udf, when, withColumn
+
+slen = udf(lambda s: len(s), IntegerType())
+ 
+ 
+udf   
+def to_upper(s):
+    if s is not None:
+        return s.upper()
+
+udf(returnType=IntegerType())
+
+def add_one(x):
+    if x is not None:
+        return x + 1
+  
+      
+
+df = spark.createDataFrame([(1, "John Doe", 21)], ("id", "name", "age"))
+
+df.select(slen("name").alias("slen(name)"), to_upper("name"), add_one("age")).show()
+
+
+
+# #pyspark.sql.functions.when(condition, value)[source]
+
+#     Evaluates a list of conditions and returns one of multiple possible result expressions. If Column.otherwise() is not invoked, None is returned for unmatched conditions.
+#     Parameters:	
+
+        # condition – a boolean Column expression.
+        # value – a literal value, or a Column expression.
+
+df.select(when(df['age'] == 21, 'old').otherwise('child').alias("age")).show()
+
+df.withColumn( 'New', when(df['age'] == 21, 'old').otherwise('child').alias("age")).show()
+
+
