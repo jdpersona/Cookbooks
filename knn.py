@@ -29,9 +29,20 @@ fruits.head()
 
 # In[4]:
 
+'''
+Mapping variables to help with prediction in category format
+
+'''
+
 # create a mapping from fruit label value to fruit name to make results easier to interpret
 lookup_fruit_name = dict(zip(fruits.fruit_label.unique(), fruits.fruit_name.unique()))   
-lookup_fruit_name
+
+
+
+
+
+
+
 
 
 # The file contains the mass, height, and width of a selection of oranges, lemons and apples. The heights were measured along the core of the fruit. The widths were the widest width perpendicular to the height.
